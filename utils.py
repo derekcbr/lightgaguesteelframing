@@ -240,6 +240,7 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
         elif spec == 'Extrusion':   
             etdef=node.getDefName()
             if etdef=='Ground_Reference' or etdef=='"VRML_Object"':
+                   
                 #heavy section
                 self_real = node.getRealNode()
             
@@ -263,6 +264,7 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                     sy2=spinearray_data[1][1] * -1
                     sygap=sy2-sy1
                 try:
+
                     facelist=[(0,1,2,3,4)]
         
                     mesh_data = bpy.data.meshes.new("cube_mesh_data")
@@ -290,8 +292,10 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                         myhue=0.966
                          
                     genDiffuseMat01(hsobj,diffusecolor=diffusecolor)
+                    bpy.context.view_layer.active_layer_collection = villahslayerColl
+                 
                     my_hs_coll.objects.link(hsobj)
-                    
+                    bpy.context.view_layer.active_layer_collection = villalayerColl
                 except Exception as e:
                     print (str(e))
             else:
