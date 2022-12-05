@@ -157,6 +157,8 @@ def resetScene():
 
 
 def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
+    bpy.ops.object.select_all(action='DESELECT')
+    
     myparalen = 1000
     bpycollection = bpy.context.collection
     global_matrix = None
@@ -179,20 +181,18 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
     my_total_coll = bpy.data.collections.new(filename)
     bpy.context.scene.collection.children.link(my_total_coll)
     
- 
-    my_hs_coll = bpy.data.collections.new("HS Collection")
-    my_total_coll.children.link(my_hs_coll)
     
-    villahslayer_collection = bpy.context.view_layer.layer_collection
-    villahslayerColl = recurLayerCollection(villahslayer_collection, "HS Collection")
+     
     
-    my_villa_coll = bpy.data.collections.new("Villa Collection")
+    my_villa_coll = bpy.data.collections.new(filename + "_Villa Collection")
     my_total_coll.children.link(my_villa_coll)
 
-
+    my_hs_coll = bpy.data.collections.new(filename + "_HS Collection")
+    my_villa_coll.children.link(my_hs_coll)
+    
     
     villalayer_collection = bpy.context.view_layer.layer_collection
-    villalayerColl = recurLayerCollection(villalayer_collection, "Villa Collection")
+    villalayerColl = recurLayerCollection(villalayer_collection, filename + "_Villa Collection")
     bpy.context.view_layer.active_layer_collection = villalayerColl
     
     mywildcard = '.'
@@ -216,8 +216,8 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                 mytranslation = node.fields[0]
                 myloc = Vector((float(mytranslation[1]), float(mytranslation[2]), float(mytranslation[3]))) / myparalen
             if len(node.id) == 3 and node.id[2] == 'Transform':
-                tfdef=node.getDefName()
-                mytfdefp1=tfdef
+                tfdef = filename +'_' + node.getDefName()
+                mytfdefp1 = tfdef
                 
                 
                 mycollections.append(tfdef)
@@ -264,6 +264,9 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                     sy2=spinearray_data[1][1] * -1
                     sygap=sy2-sy1
                 try:
+                    villahslayer_collection = bpy.context.view_layer.layer_collection
+                    villahslayerColl = recurLayerCollection(villahslayer_collection, filename + "_HS Collection")
+                    bpy.context.view_layer.active_layer_collection = villahslayerColl
 
                     facelist=[(0,1,2,3,4)]
         
@@ -272,17 +275,18 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                     mesh_data.update()
 
                     
-                    hsobj = bpy.data.objects.new("My_HS", mesh_data)
+                    hsobj = bpy.data.objects.new(filename + "_HS", mesh_data)
                     bpy.context.collection.objects.link(hsobj)
                     bpy.context.view_layer.objects.active = hsobj
+                    #hsobj.name = filename
                     hsobj.select_set(True)
                     bpy.ops.object.modifier_add(type='SOLIDIFY')
                     bpy.context.object.modifiers["Solidify"].thickness = sygap / myparalen
                     
                     hsobj.location.y = hsobj.location.y - sy1/myparalen
-                    hsobj.location.x = hsobj.location.x - myloc[0]
-                    hsobj.location.y = hsobj.location.y - myloc[1]
-                    hsobj.location.z = hsobj.location.z - myloc[2]
+                    #hsobj.location.x = hsobj.location.x - myloc[0]
+                    #hsobj.location.y = hsobj.location.y - myloc[1]
+                    #hsobj.location.z = hsobj.location.z - myloc[2]
                     
                     
                     if etdef == 'Ground_Reference':
@@ -292,10 +296,8 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                         myhue=0.966
                          
                     genDiffuseMat01(hsobj,diffusecolor=diffusecolor)
-                    bpy.context.view_layer.active_layer_collection = villahslayerColl
-                 
-                    my_hs_coll.objects.link(hsobj)
-                    bpy.context.view_layer.active_layer_collection = villalayerColl
+
+                             
                 except Exception as e:
                     print (str(e))
             else:
@@ -306,7 +308,7 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
                 
                 try:
                     if (np.round(abs(fm.to_euler().y),2) % 1.57==0 and np.round(abs(fm.to_euler().z),2) % 1.57==0) or ((np.round(abs(fm.to_euler().y),2) % 1.57!=0 or np.round(abs(fm.to_euler().z),2) % 1.57!=0) and etdef[:2]!='Br' and etdef[:1]!='W'  and etdef[:2]!='Kb'   and etdef[:1]!='B'):
-                        mynewobjName = "My_Object" + mywildcard + tfdef + mywildcard + etdef + mywildcard + str(i)
+                        mynewobjName = filename + mywildcard + tfdef + mywildcard + etdef + mywildcard + str(i)
                         mynewobj = bpy.data.objects.new(mynewobjName, mesh.copy())
                         
                         bpy.context.collection.objects.link(mynewobj)                   
@@ -336,7 +338,7 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
     
     bpy.data.objects.remove(obj, do_unlink = True)
     
-    for obj in bpy.data.collections['HS Collection'].objects:
+    for obj in bpy.data.collections[filename + "_HS Collection"].objects:
         pass
         obj.location.x  = obj.location.x - myloc[0]
         obj.location.y = obj.location.y - myloc[1]
@@ -344,7 +346,20 @@ def importHSMixedFrameCadDetailor(filename='', filepath='', myloc=(0, 0, 0)):
 
     
     
-    bpy.context.view_layer.active_layer_collection = villalayerColl
-    bpy.ops.object.select_all(action='SELECT')
+    #bpy.context.view_layer.active_layer_collection = villalayerColl
+    #bpy.ops.object.select_all(action='SELECT')
+    selectAllObjsinCol(colname=filename)
     bpy.ops.transform.rotate(value=3.14/2, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0.0, 0.0), (0.0, 1, 0.0), (0.0, 0.0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1.0, use_proportional_connected=False, use_proportional_projected=False, snap=False, snap_target='CLOSEST', snap_point=(0.0, 0.0, 0.0), snap_align=False, snap_normal=(0.0, 0.0, 0.0), gpencil_strokes=False, center_override=(0.0, 0.0, 0.0), release_confirm=False, use_accurate=False)
     
+def selectAllObjsinCol(colname='Collection'):
+    for obj in bpy.data.collections[colname].objects:
+        obj.select_set(True)
+        
+    for col in bpy.data.collections[colname].children:
+        for obj in col.objects:
+            obj.select_set(True)
+            
+        for subcol in col.children:
+            for obj in subcol.objects:
+                obj.select_set(True)
+                
